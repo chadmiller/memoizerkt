@@ -1,22 +1,31 @@
 
 
 public fun append_foo(subject: String): String {
+    Thread.sleep(1000)
     return subject + "-foo"
 }
 
 fun main(args: Array<String>) {
-
-    var other = StringFunctionMemoizer(::append_foo)
-    println(other.run("testing"))
-    println(other.run("testing"))
-    println(other.run("testing"))
-    println(other.run("testing"))
-
-
-    //var twre = Memoizer(::test_web_resource_existence)
-    //println(twre.run("https://revl.com"))
-    //println(twre.run("https://revl.com"))
-    //println(twre.run("https://revl.com"))
+    var memoized_append_foo = StringFunctionMemoizerToDisk(::append_foo, "/tmp/memocache")
+    memoized_append_foo.expire_all()
+    memoized_append_foo.expire_one("testing0")
+    println(memoized_append_foo.run("testing1"))
+    memoized_append_foo.expire_one("testing1")
+    println(memoized_append_foo.run("testing1"))
+    println(memoized_append_foo.run("testing1"))
+    println(memoized_append_foo.run("testing1"))
+    println(memoized_append_foo.run("testing1"))
+    println(memoized_append_foo.run("testing1"))
+    memoized_append_foo.expire_all()
+    println(memoized_append_foo.run("testing1"))
+    println(memoized_append_foo.run("testing2"))
+    println(memoized_append_foo.run("testing2"))
+    println(memoized_append_foo.run("testing3"))
+    println(memoized_append_foo.run("testing3"))
+    println(memoized_append_foo.run("testing2"))
+    println(memoized_append_foo.run("testing2"))
+    println(memoized_append_foo.run("testing3"))
+    println(memoized_append_foo.run("testing3"))
 
 }
 

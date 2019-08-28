@@ -6,3 +6,4 @@ example.jar: expensive.kt memoizer.kt
 
 clean:
 	rm -f example.jar
+	rm -rf /tmp/memocache
