@@ -1,7 +1,7 @@
 import java.io.File
 import java.util.Base64
 
-class CachedValueNotAvailable(override var message:String): Exception(message)
+private class CachedValueNotAvailable(override var message:String): Exception(message)
 
 
 abstract class StringFunctionMemoizer (val subject_function: (String) -> String) {
@@ -17,23 +17,7 @@ abstract class StringFunctionMemoizer (val subject_function: (String) -> String)
 
     abstract fun expire_one(name: String)
 
-    fun run(arg: String): String {
-        val storage = this.storage_location(arg)
-
-        try {
-            return fetch_from_storage(storage, arg)
-        } catch (exc: CachedValueNotAvailable) {
-            // We must calculate it. Do that next.
-        }
-
-        return subject_function(arg).also {
-            result -> write_to_storage(storage, result)
-        }
-    }
-
-    abstract fun fetch_from_storage(storage: File, name: String): String
-    abstract fun write_to_storage(storage: File, value: String)
-    abstract fun storage_location(name: String): File
+    abstract fun run(arg: String): String
 }
 
 class StringFunctionMemoizerToDisk (subject_function: (String) -> String, container: String = "memocache") : StringFunctionMemoizer(subject_function) {
@@ -47,7 +31,21 @@ class StringFunctionMemoizerToDisk (subject_function: (String) -> String, contai
         storage.delete()
     }
 
-    override fun fetch_from_storage(storage: File, name: String): String {
+    override fun run(arg: String): String {
+        val storage = this.storage_location(arg)
+
+        try {
+            return fetch_from_storage(storage, arg)
+        } catch (exc: CachedValueNotAvailable) {
+            // We must calculate it. Do that next.
+        }
+
+        return subject_function(arg).also {
+            result -> write_to_storage(storage, result)
+        }
+    }
+
+    private fun fetch_from_storage(storage: File, name: String): String {
         try {
             if (storage.lastModified() < this.visibility_horizon_time) {
                 throw CachedValueNotAvailable(name)
@@ -61,12 +59,38 @@ class StringFunctionMemoizerToDisk (subject_function: (String) -> String, contai
         } 
     }
 
-    override fun write_to_storage(storage: File, value: String) {
-            storage.writeText(value)
+    private fun write_to_storage(storage: File, value: String) {
+        storage.writeText(value)
     }
 
-    override fun storage_location(name: String): File {
+    private fun storage_location(name: String): File {
         return File(this.container, Base64.getUrlEncoder().encodeToString(name.toByteArray()))
     }
 }
 
+
+class StringFunctionMemoizerToMemory (subject_function: (String) -> String) : StringFunctionMemoizer(subject_function) {
+
+    class AnnotatedValue(val value: String) {
+        val mtime: Long = System.currentTimeMillis()
+    }
+
+    val storage = HashMap<String,AnnotatedValue>()
+
+    override fun expire_one(name: String) {
+        storage.remove(name)
+    }
+
+    override fun run(arg: String): String {
+        val item = storage.get(arg)
+        if ((item != null) && (item.mtime < this.visibility_horizon_time)) {
+            return item.value
+        }
+
+        return subject_function(arg).also {
+            result -> storage.put(arg, AnnotatedValue(result))
+        }
+    }
+
+    
+}
