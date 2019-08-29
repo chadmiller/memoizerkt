@@ -1,7 +1,7 @@
 run: example.jar
 	java -jar $<
 
-example.jar: expensive.kt memoizer.kt
+example.jar: example.kt memoizer.kt
 	kotlinc $^ -include-runtime -d $@
 
 clean:
