@@ -5,6 +5,11 @@ public fun append_foo(subject: String): String {
     return subject + "-foo"
 }
 
+suspend public fun append_bar(subject: String): String {
+    //delay(300)
+    return subject + "-foo"
+}
+
 fun main(args: Array<String>) {
     var disk_memoized_append_foo = StringFunctionMemoizerToDisk(::append_foo, "/tmp/memocache")
     disk_memoized_append_foo.expire_all()
@@ -48,5 +53,14 @@ fun main(args: Array<String>) {
     println(mem_memoized_append_foo.run("testing2"))
     println(mem_memoized_append_foo.run("testing3"))
     println(mem_memoized_append_foo.run("testing3"))
+
+    /*
+    var disk_memoized_append_bar = StringFunctionMemoizerToDisk(::append_bar, "/tmp/memocache")
+    runBlocking {
+        println(mem_memoized_append_bar.run("testing10"))
+        println(mem_memoized_append_bar.run("testing11"))
+        println(mem_memoized_append_bar.run("testing12"))
+    }
+    */
 }
 
