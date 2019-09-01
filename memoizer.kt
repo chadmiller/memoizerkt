@@ -34,7 +34,7 @@ class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
     }
 
     fun expire_all() {
-        expire_older_than_ms(System.currentTimeMillis())
+        storage.clear()
     }
 
     fun expire_one(name: K) {
@@ -71,7 +71,7 @@ class MemoizeF<K, V> (val subject_function: (K) -> V) {
     }
 
     fun expire_all() {
-        expire_older_than_ms(System.currentTimeMillis())
+        storage.clear()
     }
 
     fun expire_one(name: K) {
