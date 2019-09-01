@@ -16,6 +16,8 @@ suspend public fun append_bar(subject: String): String {
 fun main(args: Array<String>) {
     var memoized_append_bar = MemoizeSuspFun(::append_bar)
 
+    val start_time = System.currentTimeMillis()
+
     val channel = Channel<String>()
     runBlocking {
         launch {
@@ -39,6 +41,13 @@ fun main(args: Array<String>) {
             channel.close()
         }
         for (y in channel) println(y)
+    }
+
+    val end_time = System.currentTimeMillis()
+    if (((end_time - start_time) - 9000) > 300) {
+        println("FAIL: memoizer failed to perform correctly.")
+    } else if (((end_time - start_time) - 9000) < 0) {
+        println("ERROR: functions did not delay as expected.")
     }
 }
 
