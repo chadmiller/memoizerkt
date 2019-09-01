@@ -19,7 +19,7 @@ To do:
 import java.io.File
 import java.util.Base64
 
-class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
+class MemoizeSuspFun<K, V> (val subject_function: suspend (K) -> V) {
 
     private var visibility_horizon_time = 0L
 
@@ -56,7 +56,7 @@ class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
 
 
 /* Memoizer for mundane functions. */
-class MemoizeF<K, V> (val subject_function: (K) -> V) {
+class MemoizeFun<K, V> (val subject_function: (K) -> V) {
 
     private var visibility_horizon_time = 0L
 
