@@ -27,7 +27,7 @@ class MemoizeSuspFun<K, V> (val subject_function: suspend (K) -> V) {
         var atime = System.currentTimeMillis()
     }
 
-    private val storage = HashMap<K, AnnotatedValue<V>>()
+    private val storage = java.util.Collections.synchronizedMap(HashMap<K, AnnotatedValue<V>>())
 
     fun expire_older_than_ms(time: Long) {
         this.visibility_horizon_time = time
@@ -64,7 +64,7 @@ class MemoizeFun<K, V> (val subject_function: (K) -> V) {
         var atime = System.currentTimeMillis()
     }
 
-    private val storage = HashMap<K, AnnotatedValue<V>>()
+    private val storage = java.util.Collections.synchronizedMap(HashMap<K, AnnotatedValue<V>>())
 
     fun expire_older_than_ms(time: Long) {
         this.visibility_horizon_time = time
