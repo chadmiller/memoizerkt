@@ -3,15 +3,9 @@
 The primary interface to this memoizer is a `run` function that takes the
 parameter to apply to the memoized function. It also implements functions to
 cause future runs of the memoizer to get fresh results from the function, with
-an `expire_older_than_ms` function that forgets aged values (defined by first
-call*), `expire_one` that forgets a single instance's cached value, and
+an `expire_older_than_ms` function that forgets aged values (defined by most
+recent call), `expire_one` that forgets a single instance's cached value, and
 `expire_all` that forgets all unconditionally.
-
-* The choice of which way to monitor and expire values based on time, probably
-needs consideration in context of this code's usage. The time of last access is
-just as likely to be the condition of interest, instead of first time of
-access. The filesystem's "atime" or storing the current time at lookup will
-change that behavior to the other way, to a kind of LRU cache.
 
 ----
 
@@ -30,7 +24,7 @@ class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
     private var visibility_horizon_time = 0L
 
     private class AnnotatedValue<V>(val value: V) {
-        var mtime = System.currentTimeMillis()
+        var atime = System.currentTimeMillis()
     }
 
     private val storage = HashMap<K, AnnotatedValue<V>>()
@@ -40,7 +34,7 @@ class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
     }
 
     fun expire_all() {
-        storage.clear()
+        expire_older_than_ms(System.currentTimeMillis())
     }
 
     fun expire_one(name: K) {
@@ -49,8 +43,8 @@ class MemoizeS<K, V> (val subject_function: suspend (K) -> V) {
 
     suspend fun run(arg: K): V {
         val item = storage.get(arg)
-        if ((item != null) && (item.mtime > this.visibility_horizon_time)) {
-            item.mtime = System.currentTimeMillis()
+        if ((item != null) && (item.atime > this.visibility_horizon_time)) {
+            item.atime = System.currentTimeMillis()
             return item.value
         }
 
@@ -67,7 +61,7 @@ class MemoizeF<K, V> (val subject_function: (K) -> V) {
     private var visibility_horizon_time = 0L
 
     private class AnnotatedValue<V>(val value: V) {
-        val mtime: Long = System.currentTimeMillis()
+        var atime = System.currentTimeMillis()
     }
 
     private val storage = HashMap<K, AnnotatedValue<V>>()
@@ -86,7 +80,8 @@ class MemoizeF<K, V> (val subject_function: (K) -> V) {
 
     fun run(arg: K): V {
         val item = storage.get(arg)
-        if ((item != null) && (item.mtime < this.visibility_horizon_time)) {
+        if ((item != null) && (item.atime > this.visibility_horizon_time)) {
+            item.atime = System.currentTimeMillis()
             return item.value
         }
 
@@ -95,3 +90,4 @@ class MemoizeF<K, V> (val subject_function: (K) -> V) {
         }
     }
 }
+
